@@ -1,0 +1,29 @@
+>ls -la
+>./level06
+
+Включена защита stack canary:
+https://habr.com/ru/articles/467485/
+
+Есть защита ptrace()
+https://habr.com/ru/articles/111266/
+
+(gdb) b *auth + 114
+(gdb) b *auth + 286
+(gdb) r
+
+//добавить результат из gdb
+
+Breakpoint 1, 0x080487ba in auth()
+(gdb) set $eax=0
+(gdb) c
+Continuing.
+
+Breakpoint 2, 0x08048866 in auth()
+(gdb) x/d $ebp-0x10
+0xfffed678: 6232817
+(gdb) c
+Continuing.
+
+cd ../level07
+cat .pass
+GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8
