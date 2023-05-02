@@ -7,7 +7,7 @@ int		auth(char *login, int serial)
 {
 	login[strcspn(login, "\n")] = '\0';
 	int		a = strnlen(login, 32);
-	//xor eax, eax ; push eax ; xor eax, eax ; je after (add 4, esp ; pop eax)
+
 	if (a <= 5)
 		return 1;
 	if (ptrace(PTRACE_TRACEME, 0, (void*)1, NULL) == -1)
@@ -24,9 +24,9 @@ int		auth(char *login, int serial)
 		if (login[c] <= 31)
 			return 1;
 
-		{// all variables declared here are registers, they are NOT in stack
+		{
 			int	eax, edx, ecx;
-			int	mul_res[2];//tmp variable, it should be stored in edx AND eax
+			int	mul_res[2];
 
 			ecx = login[c] ^ b;
 			(int64_t)*mul_res = ecx * 0x88233b2b;
@@ -42,14 +42,11 @@ int		auth(char *login, int serial)
 	return b != serial;
 }
 
-int		main(int ac, char **av)
-{
-	// 4 bytes canary
+int		main(int ac, char **av) {
 	char			buf[32];
 	unsigned int	b;
-	char			**a = av;//useless ?
+	char			**a = av;
 
-	//xor eax, eax ; push eax ; xor eax, eax ; je after (add 4, esp ; pop eax)
 	puts("***********************************");
 	puts("*\t\tlevel06\t\t  *");
 	puts("***********************************");
@@ -64,9 +61,7 @@ int		main(int ac, char **av)
 	{
 		puts("Authenticated!");
 		system("/bin/sh");
-		//canary check
 		return 0;
 	}
-	//canary check
 	return 1;
 }

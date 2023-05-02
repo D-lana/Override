@@ -1,29 +1,62 @@
 >ls -la
 >./level06
+> gdb ./level06
+> i func
+> disas auth 
 
 Включена защита stack canary:
 https://habr.com/ru/articles/467485/
+Эта штука не дает перезаписать eip
 
 Есть защита ptrace()
 https://habr.com/ru/articles/111266/
+Наша задача положить в статус ошибки число
+ - как-будто все в порядке
 
+Ставим Breakpoint на 114 строке ф-ции auth (для ptrace)
 (gdb) b *auth + 114
+Breakpoint 1 at 0x80487ba
+
+Ставим Breakpoint на 286 строке ф-ции auth (для serial)
 (gdb) b *auth + 286
+Breakpoint 2 at 0x8048866
 (gdb) r
 
 //добавить результат из gdb
+Starting program: /home/users/level06/level06
+***********************************
+*		level06		  *
+***********************************
+-> Enter Login:
+Вводим логин всегда одинаковый, например: qwerty
 
 Breakpoint 1, 0x080487ba in auth()
+(gdb) x $eax
+Видим: 0xffffffff:	Cannot access memory at address 0xffffffff
 (gdb) set $eax=0
 (gdb) c
-Continuing.
 
 Breakpoint 2, 0x08048866 in auth()
 (gdb) x/d $ebp-0x10
 0xfffed678: 6232817
+0xffffd648:	6232813
 (gdb) c
 Continuing.
 
+Выходим из gdb и пробуем авторизоваться с полученной цифрой 
+(у нас получалась каждый раз новая)
+> ./level06
+***********************************
+*		level06		  *
+***********************************
+-> Enter Login: qwerty
+***********************************
+***** NEW ACCOUNT DETECTED ********
+***********************************
+-> Enter Serial: 6232813
+Authenticated!
+
+Вводим далее:
 cd ../level07
 cat .pass
 GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8

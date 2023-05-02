@@ -6,7 +6,7 @@
 Stack level 0, frame at 0xffffd710:
 eip = 0x8048729 in main; saved eip 0xf7e45513
 Arglist at 0xffffd708, args:
-Locals at 0xffffd708, Previous frame's sp is 0xffffd710
+Locals at 0xffffd708, Previous frames sp is 0xffffd710
 Saved registers:
 ebp at 0xffffd708, eip at 0xffffd70c
 (gdb) i reg esp
